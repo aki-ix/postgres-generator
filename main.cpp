@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <iostream>
 #include "db.h"
 
 int main() {
