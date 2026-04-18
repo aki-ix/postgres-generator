@@ -70,3 +70,19 @@ bool create_test_table(PGconn* conn, const std::string& table_name) {
     PQclear(res);
     return true;
 }
+
+long long get_table_size_bytes(PGconn* conn, const std::string& table_name) {
+    std::string sql =
+        "SELECT pg_total_relation_size('" + table_name + "');";
+
+    PGresult* sql_result = db_sql(conn, sql.c_str());
+    if (!sql_result) {
+        return -1;
+    }
+
+    char* size_text = PQgetvalue(sql_result, 0, 0);
+    long long table_size_bytes = atoll(size_text);
+
+    PQclear(sql_result);
+    return table_size_bytes;
+}

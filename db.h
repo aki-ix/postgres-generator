@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 #ifndef DB_H
 #define DB_H
 
@@ -13,5 +15,6 @@ PGresult* db_sql(PGconn* conn, const char* sql);
 
 bool table_exists(PGconn* conn, const std::string& table_name);
 bool create_test_table(PGconn* conn, const std::string& table_name);
+long long get_table_size_bytes(PGconn* conn, const std::string& table_name);
 
 #endif

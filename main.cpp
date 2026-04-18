@@ -55,27 +55,57 @@ int main() {
         std::cout << "[OK] Таблица успешно создана.\n";
     }
 
-    std::cout << "[INFO] Начинаем тестовую генерацию нагрузки...\n";
+    long long table_size_bytes = get_table_size_bytes(conn, table_name);
 
-for (int i = 1; i <= 10; i++) {
-    std::cout << "[INFO] Итерация " << i << ": выполняется INSERT...\n" << std::flush;
-
-    std::string sql =
-        "INSERT INTO " + table_name + " (data) VALUES ('test data');";
-
-    PGresult* res = db_sql(conn, sql.c_str());
-    if (!res) {
-        std::cout << "[ERROR] Ошибка при выполнении INSERT.\n";
+    if (table_size_bytes < 0) {
+        std::cout << "[ERROR] Не удалось получить размер таблицы.\n";
         db_disconnect(conn);
         return 1;
     }
 
-    PQclear(res);
+    double table_size_mb = table_size_bytes / (1024.0 * 1024.0);
+    std::cout << "[INFO] Текущий размер таблицы: "
+          << table_size_bytes << " bytes ("
+          << table_size_mb << " MB)\n";
+    std::cout << "[INFO] Начинаем тестовую генерацию нагрузки...\n";
 
-    std::cout << "[OK] Итерация " << i << " завершена.\n" << std::flush;
+    for (int i = 1; i <= 10; i++) {
+        std::cout << "[INFO] Итерация " << i << ": выполняется INSERT...\n" << std::flush;
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-}
+        std::string sql =
+            "INSERT INTO " + table_name +
+            " (data) VALUES ("
+            "md5(random()::text) || md5(random()::text) || "
+            "md5(random()::text) || md5(random()::text) || "
+            "md5(random()::text) || md5(random()::text) || "
+            "md5(random()::text) || md5(random()::text)"
+            ");";
+
+        PGresult* res = db_sql(conn, sql.c_str());
+        if (!res) {
+            std::cout << "[ERROR] Ошибка при выполнении INSERT.\n";
+            db_disconnect(conn);
+            return 1;
+        }
+
+        PQclear(res);
+
+        long long table_size_bytes = get_table_size_bytes(conn, table_name);
+        if (table_size_bytes < 0) {
+            std::cout << "[ERROR] Не удалось получить размер таблицы.\n";
+            db_disconnect(conn);
+            return 1;
+        }
+
+        double table_size_mb = table_size_bytes / (1024.0 * 1024.0);
+        std::cout << "[INFO] Текущий размер таблицы: "
+          << table_size_bytes << " bytes ("
+          << table_size_mb << " MB)\n";
+
+        std::cout << "[OK] Итерация " << i << " завершена.\n" << std::flush;
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 
     db_disconnect(conn);
     std::cout << "[INFO] Работа программы завершена.\n";
